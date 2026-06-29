@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База знаний - GitHub Pages Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <nav class="bg-blue-800 p-4 shadow-lg">
+        <div class="container mx-auto flex items-center justify-between flex-wrap">
+            <div class="flex items-center flex-shrink-0 text-white mr-6">
+                <i class="fas fa-graduation-cap mr-2 text-2xl"></i>
+                <span class="font-bold text-xl tracking-tight">ОЦ ФБУН ЦНИИ Эпидемиологии</span>
+            </div>
+            <div class="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
+                <div class="text-sm lg:flex-grow">
+                    <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-white font-bold mr-4">
+                        <i class="fas fa-home mr-1"></i> Дашборд
+                    </a>
+                </div>
+                <div>
+                    <span class="text-white text-sm mr-4">GitHub Pages Demo</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-8" id="app">
+        <div class="mb-8 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">Панель управления базой знаний (Static)</h1>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
+                        <i class="fas fa-copy text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="mb-2 text-sm font-medium text-gray-600 uppercase">Всего документов</p>
+                        <p class="text-2xl font-bold text-gray-800" id="total-docs">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="mb-2 text-sm font-medium text-gray-600 uppercase">Актуальные</p>
+                        <p class="text-2xl font-bold text-gray-800" id="active-docs">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
+                        <i class="fas fa-archive text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="mb-2 text-sm font-medium text-gray-600 uppercase">Архив</p>
+                        <p class="text-2xl font-bold text-gray-800" id="archive-docs">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-gray-700">Список документов</h2>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="search-input" placeholder="Поиск по названию или тегам..." class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 md:w-80">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full leading-normal">
+                    <thead>
+                        <tr>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Название документа</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Тип / Категория</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Версия</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="document-table-body">
+                        <!-- Content will be injected by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-gray-200 p-4 mt-8">
+        <div class="container mx-auto text-center text-gray-600 text-sm">
+            &copy; 2026 Образовательный центр ФБУН ЦНИИ Эпидемиологии. Версия для GitHub Pages.
+        </div>
+    </footer>
+
+    <script>
+        let allDocuments = [];
+
+        async function init() {
+            try {
+                const response = await fetch('data.json');
+                const data = await response.json();
+                allDocuments = data.documents;
+
+                updateStats(allDocuments);
+                renderDocuments(allDocuments);
+
+                document.getElementById('search-input').addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filtered = allDocuments.filter(doc =>
+                        doc.title.toLowerCase().includes(searchTerm) ||
+                        doc.tags.toLowerCase().includes(searchTerm) ||
+                        doc.category.toLowerCase().includes(searchTerm)
+                    );
+                    renderDocuments(filtered);
+                });
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+
+        function updateStats(docs) {
+            document.getElementById('total-docs').textContent = docs.length;
+            document.getElementById('active-docs').textContent = docs.filter(d => d.status === 'Действующий').length;
+            document.getElementById('archive-docs').textContent = docs.filter(d => d.status === 'Архив').length;
+        }
+
+        function renderDocuments(docs) {
+            const tbody = document.getElementById('document-table-body');
+            tbody.innerHTML = '';
+
+            docs.forEach(doc => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                        <div class="flex items-center">
+                            <div class="ml-3">
+                                <p class="text-gray-900 whitespace-no-wrap font-medium">${doc.title}</p>
+                                <p class="text-gray-600 whitespace-no-wrap text-xs">Обновлено: ${doc.updated_at}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                        <p class="text-gray-900 whitespace-no-wrap">${doc.type}</p>
+                        <p class="text-gray-600 whitespace-no-wrap text-xs">${doc.category}</p>
+                    </td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                        <span class="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs">v${doc.version}</span>
+                    </td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                        <span class="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
+                            <span aria-hidden class="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
+                            <span class="relative text-xs">${doc.status}</span>
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
